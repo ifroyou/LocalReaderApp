@@ -1,0 +1,10 @@
+{
+  "name": "Local Reader Phone",
+  "short_name": "Reader",
+  "start_url": "/phone",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#17130e",
+  "theme_color": "#17130e",
+  "description": "Phone player for Local Reader cached audio"
+}
