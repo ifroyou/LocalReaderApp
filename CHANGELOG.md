@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added the release-status link and a manual dispatch path for re-running the verified source-release workflow.
+
 - Replaced the AGPL/commercially licensed PyMuPDF dependency with pypdfium2 for PDF text extraction and rendering.
 - Added pinned CPU/GPU requirement files plus fully resolved lock files used by the setup script.
 - Disabled cloud synchronization by default in the local-first launcher.
@@ -11,6 +13,6 @@
 - Restored the public reader UI and vendored KaTeX assets required for a clone to serve the local app.
 - Made the UI stop its cloud auto-sync loop when the server reports local-first cloud disabled.
 
-## 0.1.0 - release candidate
+## 0.1.0 - released
 
-The release notes are tracked in [RELEASE_NOTES_v0.1.0.md](RELEASE_NOTES_v0.1.0.md). The tag is created only after a clean Windows smoke test, CI checks, dependency notice review, and release archive verification.
+The release notes are tracked in [RELEASE_NOTES_v0.1.0.md](RELEASE_NOTES_v0.1.0.md). The tag was created after a clean Windows smoke test, CI checks, dependency notice review, and release archive verification.

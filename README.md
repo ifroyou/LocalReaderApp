@@ -2,7 +2,9 @@
 
 LocalReaderApp là trình đọc tài liệu chạy **local-first** trên Windows, ưu tiên người dùng Việt Nam. Ứng dụng nhận PDF, DOCX và TXT; trích xuất văn bản, dùng OCR tiếng Việt cho PDF scan, và có thể tạo giọng đọc tiếng Việt bằng VieNeu-TTS chạy trên máy.
 
-> Trạng thái: đang chuẩn bị bản phát hành `v0.1.0`. Bản đầu tiên hữu ích cho việc dùng thử và đóng góp, nhưng chưa cam kết hỗ trợ mọi cấu hình Windows/GPU.
+> Trạng thái: bản phát hành hiện tại là `v0.1.0`. Bản đầu tiên hữu ích cho việc dùng thử và đóng góp, nhưng chưa cam kết hỗ trợ mọi cấu hình Windows/GPU.
+
+Tải bản phát hành: [GitHub Release v0.1.0](https://github.com/ifroyou/LocalReaderApp/releases/tag/v0.1.0). Báo lỗi và phản hồi thử nghiệm qua [GitHub Issues](https://github.com/ifroyou/LocalReaderApp/issues).
 
 ## Tính năng
 
