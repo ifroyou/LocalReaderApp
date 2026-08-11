@@ -35,7 +35,7 @@ Không đưa API key, service-role key, tài liệu riêng tư, audio sinh ra, c
 4. Mở <http://127.0.0.1:8765> trên trình duyệt.
 5. Khi xong, chạy **Stop Local Reader.bat**.
 
-Script setup không tự cài một PDF engine “latest” không giới hạn. Hai file `requirements-*.lock.txt` là bộ cài đã resolve đầy đủ cho Windows/Python 3.12; `requirements-cpu.txt` và `requirements-gpu.txt` là bộ dependency trực tiếp để maintainer review. Chỉ cập nhật lock sau khi smoke-test trên môi trường sạch.
+Script setup không tự cài một PDF engine “latest” không giới hạn. Hai file `requirements-*.lock.txt` là bộ cài đã resolve đầy đủ cho Windows/Python 3.11/3.12; `requirements-cpu.txt` và `requirements-gpu.txt` là bộ dependency trực tiếp để maintainer review. Chỉ cập nhật lock sau khi smoke-test trên môi trường sạch.
 
 ## Kiểm tra dành cho contributor
 
