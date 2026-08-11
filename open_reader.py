@@ -12,7 +12,7 @@ import webbrowser
 
 APP_DIR = Path(__file__).resolve().parent
 PORT = 8765
-APP_BUILD_ID = "localreader-v3.2-final-20260713-05"
+APP_BUILD_ID = "localreader-v0.1.0-dev"
 APP_URL = f"http://127.0.0.1:{PORT}/?v={APP_BUILD_ID}"
 HEALTH_URL = f"http://127.0.0.1:{PORT}/api/health"
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")

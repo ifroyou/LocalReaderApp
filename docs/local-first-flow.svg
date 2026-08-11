@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
+  <title id="title">LocalReaderApp local-first flow</title>
+  <desc id="desc">Documents stay on the Windows computer while the local reader extracts text, performs OCR, and optionally creates Vietnamese audio. Cloud sync is disabled by default.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="1" stop-color="#f4e5cf"/>
+    </linearGradient>
+    <linearGradient id="local" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8f5ee"/>
+      <stop offset="1" stop-color="#cbe8d7"/>
+    </linearGradient>
+    <linearGradient id="disabled" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f5f5f5"/>
+      <stop offset="1" stop-color="#e5e5e5"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#426b58"/>
+    </marker>
+    <style>
+      .title { font: 700 26px 'Segoe UI', Arial, sans-serif; fill: #25362e; }
+      .label { font: 700 17px 'Segoe UI', Arial, sans-serif; fill: #25362e; }
+      .body { font: 14px 'Segoe UI', Arial, sans-serif; fill: #3b4b43; }
+      .small { font: 13px 'Segoe UI', Arial, sans-serif; fill: #5f6d65; }
+      .box { stroke: #6f8c7a; stroke-width: 2; rx: 18; }
+      .line { stroke: #426b58; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="960" height="420" fill="#fbfaf7"/>
+  <text x="48" y="54" class="title">LocalReaderApp · local-first</text>
+  <text x="48" y="82" class="small">Tài liệu và audio ở lại trên máy Windows; cloud sync mặc định tắt.</text>
+
+  <rect x="48" y="132" width="190" height="150" class="box" fill="url(#paper)"/>
+  <text x="70" y="170" class="label">File local</text>
+  <text x="70" y="200" class="body">PDF · DOCX · TXT</text>
+  <text x="70" y="228" class="body">Tài liệu tiếng Việt</text>
+  <text x="70" y="256" class="small">Không upload tự động</text>
+
+  <path d="M238 207 H300" class="line"/>
+
+  <rect x="300" y="116" width="250" height="185" class="box" fill="url(#local)"/>
+  <text x="324" y="154" class="label">Local Reader</text>
+  <text x="324" y="183" class="body">127.0.0.1:8765</text>
+  <text x="324" y="213" class="body">Text layer · DOCX XML</text>
+  <text x="324" y="239" class="body">OCR tiếng Việt</text>
+  <text x="324" y="265" class="body">Giọng đọc VieNeu-TTS</text>
+
+  <path d="M550 184 H614" class="line"/>
+  <path d="M550 246 H614" class="line"/>
+
+  <rect x="614" y="128" width="190" height="108" class="box" fill="url(#local)"/>
+  <text x="638" y="165" class="label">Kết quả local</text>
+  <text x="638" y="194" class="body">Văn bản sạch</text>
+  <text x="638" y="218" class="body">Audio tiếng Việt</text>
+
+  <rect x="614" y="264" width="250" height="82" class="box" fill="url(#disabled)" stroke="#9a9a9a"/>
+  <text x="638" y="298" class="label">Cloud sync: TẮT</text>
+  <text x="638" y="324" class="small">LOCAL_READER_CLOUD_ENABLED=0</text>
+
+  <text x="48" y="378" class="small">Local-only core · Windows 10/11 · MIT · Vietnamese-first</text>
+</svg>

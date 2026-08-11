@@ -1,7 +1,0 @@
-{
-  "supabase_url": "https://your-project-ref.supabase.co",
-  "service_role_key": "your_service_role_key_server_side_only",
-  "anon_key": "",
-  "bucket": "local-reader-audio",
-  "prefix": "local-reader"
-}

@@ -1,0 +1,9 @@
+# The GPU path extends the tested CPU/ONNX runtime.
+-r requirements-cpu.txt
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.8.0
+torchaudio==2.8.0
+transformers==4.57.6
+librosa==0.11.0
+neucodec==0.0.4
+accelerate==1.10.1

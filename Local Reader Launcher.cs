@@ -25,7 +25,7 @@ internal static class Program
             check.FileName = python;
             // CPU/ONNX is a complete, supported runtime even on a machine that
             // also has an NVIDIA GPU. CUDA remains an optional acceleration path.
-            check.Arguments = "-c \"import fitz,pytesseract,PIL,vieneu,onnxruntime\"";
+            check.Arguments = "-c \"import pypdfium2,pytesseract,PIL,vieneu,onnxruntime\"";
             check.UseShellExecute = false;
             check.CreateNoWindow = true;
             check.WindowStyle = ProcessWindowStyle.Hidden;
@@ -191,7 +191,7 @@ internal static class Program
             if (!RuntimeReady(runtimePython))
             {
                 MessageBox.Show(
-                    "Bộ xử lý chưa sẵn sàng sau khi cài. Cần đủ fitz, pytesseract, PIL, vieneu và onnxruntime. Hãy mở lại ứng dụng sau khi kiểm tra kết nối.",
+                    "Bộ xử lý chưa sẵn sàng sau khi cài. Cần đủ pypdfium2, pytesseract, PIL, vieneu và onnxruntime. Hãy mở lại ứng dụng sau khi kiểm tra kết nối.",
                     "Local Reader",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
@@ -212,6 +212,7 @@ internal static class Program
         psi.StandardOutputEncoding = Encoding.UTF8;
         psi.StandardErrorEncoding = Encoding.UTF8;
         psi.EnvironmentVariables["LOCAL_READER_RUNTIME_DIR"] = runtimeDir;
+        psi.EnvironmentVariables["LOCAL_READER_CLOUD_ENABLED"] = "0";
         psi.EnvironmentVariables["LOCAL_READER_VIENEU_PORTS"] = "8766";
         psi.EnvironmentVariables["LOCAL_READER_VIENEU_ENABLED"] = "1";
         psi.EnvironmentVariables["LOCAL_READER_BACKGROUND_WORKERS"] = "1";

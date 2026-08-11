@@ -1,0 +1,7 @@
+# Direct runtime dependencies for the supported Windows CPU/ONNX path.
+# Keep this file pinned and update it only after a clean-install smoke test.
+pypdfium2==5.8.0
+pytesseract==0.3.13
+Pillow==12.3.0
+vieneu==3.0.9
+onnxruntime==1.22.0

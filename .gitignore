@@ -1,13 +1,38 @@
 ﻿# ===== Secrets and local runtime (do not publish) =====
 r2_config.json
 supabase_config.disabled.*.json
+.env
+.env.*
+!.env.example
 __pycache__/
+*.pyo
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
 *.log
+*.err.txt
+*.before_*
 *.pyc
 *.exe
 *.lnk
 *.vbs
 *.ps1
+
+# Development and release outputs
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+coverage.xml
+.coverage
+*.whl
+*.tar.gz
+release/
 
 # Local sync/state/backups
 backups/
@@ -16,6 +41,7 @@ reader_device_stores/
 reader_device_patches/
 reader_device_progress/
 reader_r2_device_indexes/
+reader_r2_device_removals/
 reader_audio_cache/
 reader_project_store*.json
 r2_cloud_sync_index*.json
@@ -30,6 +56,8 @@ reader_r2_device_indexes/
 r2_config.json.corrupt.*
 CloudMobilePlayer/
 tessdata/
+hf_cache/
+.hf_cache/
 vendor/
 _leveldb_rescue_copy/
 _localstorage_snapshots_summary.json
@@ -40,7 +68,6 @@ cloud_deleted_doc_ids.json
 cloud_mobile_pin.txt
 phone.html
 mobile_player.html
-index.html
 index.before_v3_20260619_173942.html
 cloud_player.html
 reader_server_stderr.log
@@ -48,3 +75,9 @@ reader_server_stdout.log
 LocalReaderApp.sln
 
 .local-secrets-backup/
+
+# Public local-reader UI assets (vendored, reviewed, and included in releases)
+!index.html
+!vendor/
+!vendor/katex/
+!vendor/katex/**

@@ -30,7 +30,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape as xml_escape
 
-import fitz
+import pypdfium2 as pdfium
 import pytesseract
 from PIL import Image, ImageOps
 import hmac
@@ -39,10 +39,13 @@ from datetime import datetime, timezone
 from urllib.parse import quote
 
 
-BIND_HOST = (os.environ.get("LOCAL_READER_BIND_HOST") or "127.0.0.1").strip() or "127.0.0.1"
+# The public local-first build never binds to a LAN interface. A future
+# network-enabled distribution should add its own authentication and threat
+# model rather than turning this value into an environment-only switch.
+BIND_HOST = "127.0.0.1"
 HOST = "127.0.0.1"
 PORT = 8765
-APP_BUILD_ID = "localreader-v3.2-final-20260713-05"
+APP_BUILD_ID = "localreader-v0.1.0-dev"
 WORKER_PROTOCOL_ID = "localreader-vieneu-v3turbo-2"
 MAX_REQUEST_BYTES = 384 * 1024 * 1024
 MAX_DOCX_INPUT_BYTES = 256 * 1024 * 1024
@@ -51,7 +54,6 @@ MAX_PDF_INPUT_BYTES = 256 * 1024 * 1024
 MAX_OCR_PAGES = 300
 MAX_OCR_PIXELS = 25_000_000
 ROOT = Path(__file__).resolve().parent
-VISIBLE_LAUNCHER_NAME = "Local Reader.exe"
 SHARED_AUDIO_DIR = (ROOT / "reader_audio_cache").resolve()
 PROJECT_STORE = ROOT / "reader_project_store.json"
 PROJECT_DEVICE_DIR = ROOT / "reader_device_stores"
@@ -100,28 +102,6 @@ def set_path_hidden(path, hidden=True):
         pass
 
 
-def enforce_single_launcher_visibility():
-    if os.name != "nt":
-        return
-    try:
-        children = list(ROOT.iterdir())
-    except Exception:
-        return
-    for child in children:
-        set_path_hidden(child, child.name.casefold() != VISIBLE_LAUNCHER_NAME.casefold())
-
-
-def helper_visibility_watchdog():
-    while True:
-        enforce_single_launcher_visibility()
-        time.sleep(4)
-
-
-def start_helper_visibility_watchdog():
-    enforce_single_launcher_visibility()
-    threading.Thread(target=helper_visibility_watchdog, daemon=True, name="helper-visibility").start()
-
-
 def parse_ports(value, default):
     ports = []
     for raw in str(value or "").split(","):
@@ -150,6 +130,9 @@ def env_flag(name, default=True):
     if raw is None or str(raw).strip() == "":
         return bool(default)
     return str(raw).strip().lower() not in ("0", "false", "no", "off")
+
+
+CLOUD_ENABLED = env_flag("LOCAL_READER_CLOUD_ENABLED", False)
 
 
 def has_nvidia_gpu():
@@ -3288,7 +3271,7 @@ def sync_all_projects_to_supabase():
 
 
 def preferred_cloud_provider():
-    return "r2"
+    return "r2" if CLOUD_ENABLED else ""
 
 
 def supabase_status_payload(config=None):
@@ -3336,6 +3319,8 @@ def active_cloud_used_bytes():
 
 
 def sync_project_to_cloud(doc_id):
+    if not CLOUD_ENABLED:
+        return cloud_disabled_result()
     doc_id = str(doc_id or "").strip()
     with CLOUD_SYNC_SERIAL_LOCK:
         if cloud_doc_id_is_deleted(doc_id):
@@ -3352,6 +3337,8 @@ def sync_project_to_cloud(doc_id):
 
 
 def sync_all_projects_to_cloud():
+    if not CLOUD_ENABLED:
+        return cloud_disabled_result()
     with CLOUD_SYNC_SERIAL_LOCK:
         config = load_r2_config()
         missing = r2_missing_fields(config)
@@ -3365,6 +3352,8 @@ def sync_all_projects_to_cloud():
 
 
 def sync_everything_to_r2():
+    if not CLOUD_ENABLED:
+        return cloud_disabled_result()
     with CLOUD_SYNC_SERIAL_LOCK:
         config = load_r2_config()
         missing = r2_missing_fields(config)
@@ -3378,6 +3367,8 @@ def sync_everything_to_r2():
 
 
 def rebuild_cloud_library():
+    if not CLOUD_ENABLED:
+        return cloud_disabled_result()
     with CLOUD_SYNC_SERIAL_LOCK:
         config = load_r2_config()
         missing = r2_missing_fields(config)
@@ -3454,6 +3445,8 @@ def schedule_cloud_delete_retry(doc_ids):
 
 
 def delete_projects_from_cloud(doc_ids, _schedule_retry=True):
+    if not CLOUD_ENABLED:
+        return cloud_disabled_result()
     with CLOUD_SYNC_SERIAL_LOCK:
         ids = clean_doc_ids(doc_ids)
         remember_cloud_deleted_doc_ids(ids)
@@ -3483,6 +3476,8 @@ def delete_projects_from_cloud(doc_ids, _schedule_retry=True):
 
 
 def cloud_status_payload():
+    if not CLOUD_ENABLED:
+        return cloud_disabled_result()
     r2 = r2_status_payload()
     return {
         "ok": r2["configured"],
@@ -3490,6 +3485,20 @@ def cloud_status_payload():
         "provider": "r2",
         **r2,
         "message": "" if r2["configured"] else "Cloudflare R2 chua cau hinh day du; khong ghi cloud.",
+    }
+
+
+def cloud_disabled_result():
+    return {
+        "ok": True,
+        "enabled": False,
+        "configured": False,
+        "provider": "",
+        "missing": [],
+        "used_bytes": 0,
+        "limit_bytes": 0,
+        "skipped": True,
+        "message": "Cloud sync is disabled in the local-first build. Set LOCAL_READER_CLOUD_ENABLED=1 only after configuring and reviewing cloud credentials.",
     }
 
 
@@ -4381,6 +4390,14 @@ def auto_sync_project_to_cloud_background(doc_id):
     doc_id = str(doc_id or "").strip()
     if not doc_id:
         return
+    if not CLOUD_ENABLED:
+        set_job_state(
+            doc_id,
+            cloudSyncStatus="disabled",
+            cloudSyncMessage="Cloud sync is disabled in the local-first build",
+            cloudLimitBytes=0,
+        )
+        return
     if preferred_cloud_provider() != "r2":
         set_job_state(
             doc_id,
@@ -5002,20 +5019,23 @@ def available_ocr_lang():
 
 def text_layer_from_pdf(doc):
     pages = []
-    for page_no, page in enumerate(doc, start=1):
-        text = clean_text(page.get_text("text") or "")
+    for page_no in range(len(doc)):
+        page = doc[page_no]
+        text_page = page.get_textpage()
+        text = clean_text(text_page.get_text_range() or "")
         if text:
-            pages.append(f"[Page {page_no}]\n{text}")
+            pages.append(f"[Page {page_no + 1}]\n{text}")
     return "\n\n".join(pages).strip()
 
 
 def render_page_for_ocr(page, dpi=220):
     zoom = max(72, min(300, int(dpi or 220))) / 72
-    estimated_pixels = max(1.0, float(page.rect.width) * float(page.rect.height) * zoom * zoom)
+    width, height = page.get_size()
+    estimated_pixels = max(1.0, float(width) * float(height) * zoom * zoom)
     if estimated_pixels > MAX_OCR_PIXELS:
         zoom *= (MAX_OCR_PIXELS / estimated_pixels) ** 0.5
-    pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
-    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+    bitmap = page.render(scale=zoom)
+    img = bitmap.to_pil().convert("RGB")
     img = ImageOps.grayscale(img)
     img = ImageOps.autocontrast(img)
     return img
@@ -5027,7 +5047,7 @@ def ocr_pdf(doc, max_pages=0, dpi=220):
     if not TESSDATA_DIR.exists():
         raise RuntimeError("Missing tessdata folder next to reader_server.py")
 
-    page_count = doc.page_count
+    page_count = len(doc)
     requested = MAX_OCR_PAGES if not max_pages else max(1, int(max_pages))
     limit = min(page_count, requested, MAX_OCR_PAGES)
     lang = available_ocr_lang()
@@ -5049,8 +5069,9 @@ def extract_pdf_bytes(pdf_bytes, max_pages=0, force_ocr=False):
         raise ValueError("PDF data is empty")
     if len(pdf_bytes) > MAX_PDF_INPUT_BYTES:
         raise ValueError(f"PDF is too large (max {MAX_PDF_INPUT_BYTES // 1024 // 1024} MB)")
-    with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
-        page_count = doc.page_count
+    doc = pdfium.PdfDocument(pdf_bytes)
+    try:
+        page_count = len(doc)
         if not force_ocr:
             text = text_layer_from_pdf(doc)
             if len(text) >= 120:
@@ -5072,6 +5093,8 @@ def extract_pdf_bytes(pdf_bytes, max_pages=0, force_ocr=False):
             "ocr_lang": lang,
             "char_count": len(text),
         }
+    finally:
+        doc.close()
 
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
@@ -5828,7 +5851,9 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True,
                 "app_build": APP_BUILD_ID,
                 "engine": "vieneu-tts",
+                "bind_host": BIND_HOST,
                 "port": PORT,
+                "cloud_enabled": CLOUD_ENABLED,
                 "server_python": sys.executable,
                 "server_prefix": sys.prefix,
                 "tts_engine": active_tts_engine_label(),
@@ -6092,13 +6117,13 @@ def main():
     SERVER_SHUTDOWN_EVENT.clear()
     server = LocalReaderHTTPServer((BIND_HOST, PORT), Handler)
     try:
-        start_helper_visibility_watchdog()
         if VIENEU_ENABLED:
             warm_vieneu_workers_background()
         start_auto_project_watchdog()
-        schedule_cloud_delete_retry(read_cloud_deleted_doc_ids())
-        schedule_reset_cloud_cleanup_background(read_project_store(), delay=5.0, force=True)
-        schedule_r2_orphan_cleanup_background(delay=7.0, force=True)
+        if CLOUD_ENABLED:
+            schedule_cloud_delete_retry(read_cloud_deleted_doc_ids())
+            schedule_reset_cloud_cleanup_background(read_project_store(), delay=5.0, force=True)
+            schedule_r2_orphan_cleanup_background(delay=7.0, force=True)
         schedule_auto_start_next_project_prepare(delay=3.0)
         server.serve_forever()
     finally:

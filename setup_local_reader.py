@@ -38,40 +38,18 @@ def ensure_venv():
 
 
 def install_packages(use_cuda):
-    run([PYTHON_EXE, "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"])
+    requirements = APP_DIR / ("requirements-gpu.lock.txt" if use_cuda else "requirements-cpu.lock.txt")
+    if not requirements.exists():
+        raise FileNotFoundError(f"Missing pinned lock file: {requirements}")
     run([
         PYTHON_EXE,
         "-m",
         "pip",
         "install",
-        "PyMuPDF",
-        "pytesseract",
-        "pillow",
-        "vieneu==3.0.9",
+        "--disable-pip-version-check",
+        "--requirement",
+        requirements,
     ])
-    if use_cuda:
-        run([
-            PYTHON_EXE,
-            "-m",
-            "pip",
-            "install",
-            "torch",
-            "torchaudio",
-            "--index-url",
-            "https://download.pytorch.org/whl/cu128",
-        ])
-        # Dependencies used by the v3 Turbo PyTorch/CUDA engine. The CPU
-        # installation deliberately stays lightweight and uses ONNX only.
-        run([
-            PYTHON_EXE,
-            "-m",
-            "pip",
-            "install",
-            "transformers",
-            "librosa>=0.11.0",
-            "neucodec>=0.0.4",
-            "accelerate",
-        ])
 
 
 def verify(use_cuda):
@@ -79,23 +57,26 @@ def verify(use_cuda):
 import importlib.util
 import sys
 use_cuda = sys.argv[1] == "1"
-names = ["fitz", "pytesseract", "PIL", "vieneu", "torch"]
+names = ["pypdfium2", "pytesseract", "PIL", "vieneu", "torch"]
 if not use_cuda:
-    names = ["fitz", "pytesseract", "PIL", "vieneu", "onnxruntime"]
+    names = ["pypdfium2", "pytesseract", "PIL", "vieneu", "onnxruntime"]
 else:
     names += ["soundfile", "transformers"]
 for name in names:
     spec = importlib.util.find_spec(name)
     print(f"{name}: {'OK' if spec else 'MISSING'}")
-try:
-    import torch
-    print("torch_version:", torch.__version__)
-    print("cuda_available:", torch.cuda.is_available())
-    if torch.cuda.is_available():
-        print("cuda_device:", torch.cuda.get_device_name(0))
-        print("torch_cuda:", torch.version.cuda)
-except Exception as exc:
-    print("torch_error:", exc)
+if use_cuda:
+    try:
+        import torch
+        print("torch_version:", torch.__version__)
+        print("cuda_available:", torch.cuda.is_available())
+        if torch.cuda.is_available():
+            print("cuda_device:", torch.cuda.get_device_name(0))
+            print("torch_cuda:", torch.version.cuda)
+    except Exception as exc:
+        print("torch_error:", exc)
+else:
+    print("torch: not required for CPU mode")
 """
     run([PYTHON_EXE, "-c", code, "1" if use_cuda else "0"])
 
@@ -106,10 +87,8 @@ def main():
     parser.add_argument("--skip-install", action="store_true", help="Only create/check the venv.")
     args = parser.parse_args()
 
-    if sys.version_info < (3, 10):
-        raise SystemExit("Python 3.10+ is required.")
-    if sys.version_info >= (3, 13):
-        print("Warning: Python 3.13+ may not be supported by every TTS dependency. Python 3.11 or 3.12 is safer.", flush=True)
+    if sys.version_info < (3, 11) or sys.version_info >= (3, 13):
+        raise SystemExit("Python 3.11 or 3.12 is required for the pinned runtime.")
 
     use_cuda = (not args.cpu) and has_nvidia_gpu()
     print(f"App: {APP_DIR}", flush=True)
